@@ -1,7 +1,7 @@
 #!/bin/python2.7
 
 import RPi.GPIO as GPIO
-import threading
+import threading,proBuildr as PB
 from time import sleep
 # start main demo function
 #main()
@@ -97,7 +97,7 @@ class LCD:
 	def home(self):
 		self.write4bits(self.LCD_RETURNHOME) # set cursor position to zero
 		self.delayMicroseconds(3000) # this command takes a long time!
-	
+
 	def clear(self):
 		self.write4bits(self.LCD_CLEARDISPLAY) # command to clear display
 		self.delayMicroseconds(3000)	# 3000 microsecond sleep, clearing the display takes a long time
@@ -105,12 +105,12 @@ class LCD:
 	def setCursor(self, col, row):
 		self.row_offsets = [ 0x00, 0x40, 0x14, 0x54 ]
 
-		if ( row > self.numlines ): 
+		if ( row > self.numlines ):
 			row = self.numlines - 1 # we count rows starting w/0
 
 		self.write4bits(self.LCD_SETDDRAMADDR | (col + self.row_offsets[row]))
 
-	def noDisplay(self): 
+	def noDisplay(self):
 		# Turn the display off (quickly)
 		self.displaycontrol &= ~self.LCD_DISPLAYON
 		self.write4bits(self.LCD_DISPLAYCONTROL | self.displaycontrol)
@@ -163,7 +163,7 @@ class LCD:
 		self.displaymode |= self.LCD_ENTRYSHIFTINCREMENT
 		self.write4bits(self.LCD_ENTRYMODESET | self.displaymode)
 
-	def noAutoscroll(self): 
+	def noAutoscroll(self):
 		# This will 'left justify' text from the cursor
 		self.displaymode &= ~self.LCD_ENTRYSHIFTINCREMENT
 		self.write4bits(self.LCD_ENTRYMODESET | self.displaymode)
@@ -192,9 +192,9 @@ class LCD:
 
 	def pulseEnable(self):
 		self.GPIO.output(self.pin_e, False)
-		self.delayMicroseconds(1)		# 1 microsecond pause - enable pulse must be > 450ns 
+		self.delayMicroseconds(1)		# 1 microsecond pause - enable pulse must be > 450ns
 		self.GPIO.output(self.pin_e, True)
-		self.delayMicroseconds(1)		# 1 microsecond pause - enable pulse must be > 450ns 
+		self.delayMicroseconds(1)		# 1 microsecond pause - enable pulse must be > 450ns
 		self.GPIO.output(self.pin_e, False)
 		self.delayMicroseconds(1)		# commands need > 37us to settle
 
@@ -206,19 +206,19 @@ class LCD:
 				self.write4bits(0xC0) # next line
 			else:
 				self.write4bits(ord(char),True)
-	
+
 	def destroy(self):
 		print "clean up used_gpio"
 		self.GPIO.cleanup(self.used_gpio)
 
 						# GPIO Ports
-Enc_A = 9  				# Encoder input A: input GPIO 4 
-global Enc_B 
-Enc_B = 10  			       # Encoder input B: input GPIO 14 
+Enc_A = 9  				# Encoder input A: input GPIO 4
+global Enc_B
+Enc_B = 10  			       # Encoder input B: input GPIO 14
 Enc_C = 5
 
 Rotary_counter = 0  			# Start counting from 0
-Current_A = 1					# Assume that rotary switch is not 
+Current_A = 1					# Assume that rotary switch is not
 Current_B = 1					# moving while we init software
 Current_C = 1
 
@@ -233,9 +233,9 @@ def init():
 	GPIO.setup(Enc_B, GPIO.IN)
 	GPIO.setup(Enc_C, GPIO.IN)
 									# use interrupts for all inputs
-	GPIO.add_event_detect(Enc_A, GPIO.RISING, callback=rotary_interrupt) 				# NO bouncetime 
-	GPIO.add_event_detect(Enc_B, GPIO.RISING, callback=rotary_interrupt) 				# NO bouncetime 
-	GPIO.add_event_detect(Enc_C, GPIO.RISING, callback=rotary_interrupt) 				# NO bouncetime 
+	GPIO.add_event_detect(Enc_A, GPIO.RISING, callback=rotary_interrupt) 				# NO bouncetime
+	GPIO.add_event_detect(Enc_B, GPIO.RISING, callback=rotary_interrupt) 				# NO bouncetime
+	GPIO.add_event_detect(Enc_C, GPIO.RISING, callback=rotary_interrupt) 				# NO bouncetime
 	return
 
 
@@ -262,7 +262,7 @@ def rotary_interrupt(A_or_B):
 	if (Switch_A and Switch_B and Switch_C):			# Both one active? Yes -> end of sequence
 		LockRotary.acquire()					# get lock
 		RETURN_VAL = A_or_B
-		if A_or_B == Enc_B:					# Turning direction depends on 
+		if A_or_B == Enc_B:					# Turning direction depends on
 			Rotary_counter += 1				# which input gave last interrupt
 		else:							# so depending on direction either
 			Rotary_counter -= 1				# increase or decrease counter
@@ -277,25 +277,25 @@ def main():
 	BOOLEAN_SELECT = False
 
 
-	Volume = 0							# Current Volume	
+	Volume = 0							# Current Volume
 	NewCounter = 0							# for faster reading with locks
 
 
 	init()								# Init interrupts, GPIO, ...
 
-	while True :							# start test 
+	while True :							# start test
 		sleep(0.1)						# sleep 100 msec
 
 									# because of threading make sure no thread
 									# changes value until we get them
-									# and reset them								
+									# and reset them
 		LockRotary.acquire()					# get lock for rotary switch
 		NewCounter = Rotary_counter			# get counter value
 		Rotary_counter = 0					# RESET IT TO 0
 		LockRotary.release()					# and release lock
 
 		if (NewCounter !=0):					# Counter has CHANGED
-			Volume = Volume + NewCounter*abs(NewCounter)# Decrease or increase volume 
+			Volume = Volume + NewCounter*abs(NewCounter)# Decrease or increase volume
 			if Volume < 0:					# limit volume to 0...100
 			   Volume = 0
 			if Volume > 100:				# limit volume to 0...100
@@ -334,15 +334,30 @@ def print_msg():
 	print 'Please press Ctrl+C to end the program...'
 	raw_input ("Press Enter to begin\n")
 
+def txtRet(FIL):
+	if(FIL == 'EQUATION'):
+		return str(open(FIL, 'r').read())[0:-1]
+	if(FIL == 'RESULT'):
+		return str(open(FIL, 'r').read()).replace('\t', "")
+
 def main_lcd():
 	global Rotary_counter, LockRotary, RETURN_VAL
-	SCREEN = ['PROBLEM', 'OPTION0', 'OPTION1', 'OPTION2']
+	PROB = PB.pb()
+	PROB.run()
+	print(txtRet("EQUATION"), txtRet("RESULT"))
+	RESULT = txtRet("RESULT")
+	SCREEN = [txtRet("EQUATION"), 'OPTION0', 'OPTION1', 'OPTION2']
+	R_VAL = random.randint(1, 3)
+	SCREEN[R_VAL] = RESULT
+	for i in range(1, 3):
+		if i != R_VAL:
+			SCREEN[i] = (random.random(0, RESULT+5) if (random.randint(0, 1) == 0) else random.randint(0, RESULT+5))
 	SCREEN_CHOICE = 0
         LAST_CHOICE = None
 	BOOLEAN_SELECT = False
 
 
-	Volume = 0							# Current Volume	
+	Volume = 0							# Current Volume
 	NewCounter = 0							# for faster reading with locks
 
 
