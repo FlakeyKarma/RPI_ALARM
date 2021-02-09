@@ -26,6 +26,8 @@ class pb:
         self.C_FIL = open("pb.cfg", 'r') if FIL is None else FIL
         #Default calculator cli tool
         self.CALCULATOR = 'calc'
+        #Filter to apply
+        self.FILTER = ''
 
     #Set with file
     def setcfg(self):
@@ -51,6 +53,9 @@ class pb:
             #Set calculator
             if i == 1:
                 self.CALCULATOR = inpt[i].split(delim)[1]
+                continue
+            if i == 2:
+                self.FILTER = inpt[i].split(delim)[1]
                 continue
             #Set configuration options
             OPS[inpt[i].split(delim)[0]] = int(inpt[i].split(delim)[1])
@@ -163,7 +168,7 @@ class pb:
             EQ.write(self.PROBLEM)
 
         #Calculate equation with calculator command
-        os.system("%s \"%s\" > RESULT" % (self.CALCULATOR, self.PROBLEM))
+        os.system("%s \"%s\" %s > RESULT" % (self.CALCULATOR, self.PROBLEM, self.FILTER))
 
 prob = pb()
 prob.run()
